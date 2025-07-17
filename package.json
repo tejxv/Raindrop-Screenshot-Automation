@@ -1,0 +1,21 @@
+{
+  "name": "raindrop-screenshot-automation",
+  "version": "1.0.0",
+  "description": "Automatically upload macOS screenshots to Raindrop.io",
+  "main": "watcher.js",
+  "scripts": {
+    "start": "node watcher.js",
+    "test": "node test_upload.js",
+    "setup": "node setup.js"
+  },
+  "dependencies": {
+    "chokidar": "^3.5.3",
+    "axios": "^1.6.0",
+    "dotenv": "^16.3.1",
+    "node-notifier": "^10.0.1",
+    "form-data": "^4.0.0"
+  },
+  "keywords": ["raindrop", "screenshot", "automation", "macos"],
+  "author": "Raindrop Screenshot Automation",
+  "license": "MIT"
+} 

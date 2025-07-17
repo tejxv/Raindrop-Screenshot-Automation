@@ -1,0 +1,16 @@
+# Raindrop.io API Configuration
+RAINDROP_ACCESS_TOKEN=your_access_token_here
+RAINDROP_REFRESH_TOKEN=your_refresh_token_here
+RAINDROP_COLLECTION_ID=123456
+
+# Screenshot Configuration
+SCREENSHOT_FOLDER=/Users/tejas/Desktop
+UPLOADED_FOLDER=/Users/tejas/Screenshots/Uploaded
+
+# Optional Configuration
+TAGS=screenshot,macos
+AUTO_DELETE=false
+NOTIFICATIONS=true
+
+# Test Configuration (for development)
+TEST_TOKEN=test_token_here 
