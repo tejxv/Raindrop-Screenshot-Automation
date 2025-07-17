@@ -211,6 +211,42 @@ class RaindropAPI {
       return false;
     }
   }
+
+  /**
+   * Get user quota information
+   */
+  async getUserQuota() {
+    try {
+      const response = await this.client.get('/user');
+      const user = response.data.user;
+      
+      if (user.files) {
+        const usedBytes = user.files.used || 0;
+        const totalBytes = user.files.size || (user.pro ? 10000000000 : 104857600); // 10GB for pro, 100MB for free
+        const remainingBytes = totalBytes - usedBytes;
+        
+        return {
+          used: usedBytes,
+          total: totalBytes,
+          remaining: remainingBytes,
+          usedMB: Math.round(usedBytes / (1024 * 1024) * 100) / 100,
+          totalMB: Math.round(totalBytes / (1024 * 1024) * 100) / 100,
+          remainingMB: Math.round(remainingBytes / (1024 * 1024) * 100) / 100,
+          usedPercent: Math.round((usedBytes / totalBytes) * 100),
+          isPro: user.pro || false
+        };
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('❌ Failed to get user quota:', error.response?.data || error.message);
+      if (error.response?.status === 401 && this.refreshToken) {
+        await this.refreshAccessToken();
+        return this.getUserQuota();
+      }
+      throw error;
+    }
+  }
 }
 
 module.exports = RaindropAPI; 

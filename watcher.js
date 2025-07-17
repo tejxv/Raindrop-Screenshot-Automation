@@ -2,6 +2,7 @@ const chokidar = require('chokidar');
 const path = require('path');
 const fs = require('fs');
 const notifier = require('node-notifier');
+const { exec } = require('child_process');
 const config = require('./config');
 const RaindropAPI = require('./raindrop_api');
 
@@ -148,7 +149,32 @@ class ScreenshotWatcher {
     const filename = path.basename(filePath);
     
     console.log(`✅ Successfully uploaded: ${filename}`);
-    this.notify('Raindrop Upload Success', `Uploaded: ${filename}`);
+    
+    // Extract the URL from the upload response
+    const screenshotUrl = uploadResponse?.item?.link;
+    
+    if (screenshotUrl) {
+      console.log(`🔗 Screenshot URL: ${screenshotUrl}`);
+      this.notify('Raindrop Upload Success', `Uploaded: ${filename}`, screenshotUrl);
+    } else {
+      this.notify('Raindrop Upload Success', `Uploaded: ${filename}`);
+    }
+
+    // Get and display quota information
+    try {
+      const quota = await this.api.getUserQuota();
+      if (quota) {
+        const quotaMessage = `${quota.remainingMB}MB remaining of ${quota.totalMB}MB (${quota.usedPercent}% used)`;
+        console.log(`📊 Storage quota: ${quotaMessage}`);
+        
+        // Send quota notification
+        setTimeout(() => {
+          this.notify('Storage Quota', quotaMessage);
+        }, 1000); // Delay to avoid notification overlap
+      }
+    } catch (error) {
+      console.warn('⚠️ Could not retrieve quota information:', error.message);
+    }
 
     // Move or delete file based on configuration
     if (this.watcherConfig.autoDelete) {
@@ -208,17 +234,57 @@ class ScreenshotWatcher {
   }
 
   /**
-   * Send macOS notification
+   * Send macOS notification with optional URL action
    */
-  notify(title, message) {
+  notify(title, message, url = null) {
     if (!this.watcherConfig.notifications) return;
 
-    notifier.notify({
+    const notificationConfig = {
       title: title,
       message: message,
       icon: path.join(__dirname, 'icon.png'), // Optional icon
       sound: true,
       wait: false
+    };
+
+    // Add actions if URL is provided
+    if (url) {
+      notificationConfig.actions = ['Show'];
+      notificationConfig.dropdownLabel = 'Actions';
+      notificationConfig.wait = true; // Wait for user interaction
+    }
+
+    const notification = notifier.notify(notificationConfig);
+
+    // Handle notification click events
+    if (url) {
+      notification.on('click', () => {
+        this.openUrl(url);
+      });
+
+      notification.on('activate', () => {
+        this.openUrl(url);
+      });
+
+      notification.on('show', () => {
+        this.openUrl(url);
+      });
+    }
+  }
+
+  /**
+   * Open URL in default browser
+   */
+  openUrl(url) {
+    const command = process.platform === 'darwin' ? 'open' : 
+                   process.platform === 'win32' ? 'start' : 'xdg-open';
+    
+    exec(`${command} "${url}"`, (error) => {
+      if (error) {
+        console.error(`❌ Failed to open URL: ${error.message}`);
+      } else {
+        console.log(`🌐 Opened URL: ${url}`);
+      }
     });
   }
 

@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node watcher.js",
     "test": "node test_upload.js",
-    "setup": "node setup.js"
+    "setup": "node setup.js",
+    "daemon": "node daemon-manager.js"
   },
   "dependencies": {
     "chokidar": "^3.5.3",

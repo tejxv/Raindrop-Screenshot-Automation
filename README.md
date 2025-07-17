@@ -1,6 +1,6 @@
 # Raindrop Screenshot Automation
 
-A macOS-native Node.js utility that automatically watches for new screenshots and uploads them to Raindrop.io using their REST API.
+A macOS-native Node.js utility that automatically watches for new screenshots and uploads them to Raindrop.io using their REST API. Can run as a background daemon or manually.
 
 ## Features
 
@@ -10,7 +10,7 @@ A macOS-native Node.js utility that automatically watches for new screenshots an
 - 📤 Uploads screenshots to Raindrop.io as file-type raindrops
 - 🔐 OAuth 2.0 authentication with token refresh support
 - 🏷️ Configurable tags and collection assignment
-- 📱 macOS Notification Center integration
+- 📱 macOS Notification Center integration with clickable URLs
 - 📁 Automatic file organization (move to uploaded folder or delete)
 
 🔧 **Advanced Features:**
@@ -19,6 +19,13 @@ A macOS-native Node.js utility that automatically watches for new screenshots an
 - 📝 Detailed logging and error handling
 - 🧪 Comprehensive testing utilities
 - ⚙️ Highly configurable via environment variables
+
+🚀 **Background Service Features:**
+- 🛠️ **Daemon Mode**: Runs as a background service on macOS
+- 🔄 **Auto-start**: Automatically starts on login
+- 🔗 **Clickable Notifications**: Click notifications to open uploaded screenshots
+- 📊 **Quota Monitoring**: Real-time storage quota notifications
+- 📋 **Service Management**: Easy start/stop/restart commands
 
 ## Prerequisites
 
@@ -65,7 +72,34 @@ A macOS-native Node.js utility that automatically watches for new screenshots an
 
 ## Usage
 
-### Start the Watcher
+### Option 1: Background Daemon (Recommended)
+
+**Install the daemon** (runs automatically on login):
+```bash
+npm run daemon install
+```
+
+**Manage the daemon**:
+```bash
+# Check status
+npm run daemon status
+
+# View logs
+npm run daemon logs
+
+# View errors
+npm run daemon errors
+
+# Start/stop/restart
+npm run daemon start
+npm run daemon stop
+npm run daemon restart
+
+# Remove daemon
+npm run daemon uninstall
+```
+
+### Option 2: Manual Mode
 
 ```bash
 npm start
@@ -76,8 +110,31 @@ node watcher.js
 The watcher will:
 - Monitor your screenshot folder for new files
 - Automatically upload matching screenshots to Raindrop.io
-- Show notifications for successful uploads
+- Show **two types of notifications**:
+  1. **Upload Success**: Shows filename with clickable "Show" button to open screenshot
+  2. **Storage Quota**: Shows remaining storage (e.g., "86.37MB remaining of 95.37MB (9% used)")
 - Move uploaded files to the configured folder
+
+## Enhanced Notification System
+
+When you take a screenshot, you'll receive:
+
+### 1. Upload Success Notification
+- **Title**: "Raindrop Upload Success"
+- **Message**: "Uploaded: Screenshot-filename.png"
+- **Action**: Click notification or "Show" button to open the uploaded screenshot in your browser
+- **URL**: Direct link to S3-hosted screenshot
+
+### 2. Storage Quota Notification
+- **Title**: "Storage Quota"
+- **Message**: "86.37MB remaining of 95.37MB (9% used)"
+- **Features**:
+  - Real-time quota information
+  - Works for both free (100MB) and pro (10GB) accounts
+  - Updates after each upload
+  - Shows remaining space and usage percentage
+
+## Testing
 
 ### Test the Configuration
 
@@ -128,6 +185,17 @@ This catches all macOS screenshot variations including:
 - `Screenshot 2025-07-17 at 1.38.52 PM (2).png` (duplicates)
 - Any other macOS screenshot naming pattern
 
+## Apple Silicon Mac Compatibility
+
+This utility is fully compatible with Apple Silicon Macs. The daemon automatically detects and uses the correct Node.js path:
+- **Intel Macs**: `/usr/local/bin/node`
+- **Apple Silicon Macs**: `/opt/homebrew/bin/node`
+
+If you encounter daemon startup issues, ensure Node.js is installed via Homebrew:
+```bash
+brew install node
+```
+
 ## API Integration
 
 ### Authentication
@@ -140,6 +208,13 @@ This catches all macOS screenshot variations including:
 - Sends files as `multipart/form-data`
 - Includes metadata (title, excerpt, tags, collection)
 - Handles file validation and size limits
+- Returns S3 URL for uploaded files
+
+### Quota Monitoring
+- Uses `GET /user` endpoint to fetch storage information
+- Calculates remaining space and usage percentage
+- Supports both free (100MB) and pro (10GB) accounts
+- Updates quota information after each upload
 
 ### Error Handling
 - Detailed error logging for debugging
@@ -150,13 +225,15 @@ This catches all macOS screenshot variations including:
 
 ```
 raindrop-screenshot-automation/
-├── package.json          # Project dependencies
-├── config.js            # Configuration management
-├── raindrop_api.js      # API client and authentication
-├── watcher.js           # Main file watcher logic
-├── test_upload.js       # Testing utilities
-├── config.template      # Environment variable template
-└── README.md           # This file
+├── package.json                           # Project dependencies
+├── config.js                             # Configuration management
+├── raindrop_api.js                       # API client and authentication
+├── watcher.js                            # Main file watcher logic
+├── test_upload.js                        # Testing utilities
+├── daemon-manager.js                     # Daemon management utility
+├── com.raindrop.screenshot.automation.plist # macOS LaunchAgent configuration
+├── config.template                       # Environment variable template
+└── README.md                            # This file
 ```
 
 ## Troubleshooting
@@ -181,12 +258,25 @@ raindrop-screenshot-automation/
 - Check that files are `.png` or `.jpg` format
 - Verify the watcher is monitoring the correct folder
 
+**Daemon won't start**
+- Check if Node.js is installed: `which node`
+- For Apple Silicon Macs, ensure Homebrew is installed: `brew install node`
+- Check daemon logs: `npm run daemon logs` and `npm run daemon errors`
+- Reinstall daemon: `npm run daemon uninstall && npm run daemon install`
+
+**Notifications not working**
+- Ensure notifications are enabled in your `.env` file: `NOTIFICATIONS=true`
+- Check macOS System Preferences > Notifications > Terminal (or your terminal app)
+- Grant notification permissions if prompted
+
 ### Debug Mode
 
 For additional debugging, you can:
 1. Check the console output for detailed error messages
-2. Run the test script to isolate issues
-3. Verify API responses in the test output
+2. Run the test script to isolate issues: `npm test`
+3. View daemon logs: `npm run daemon logs`
+4. Check daemon status: `npm run daemon status`
+5. Verify API responses in the test output
 
 ## Development
 
@@ -198,6 +288,7 @@ The codebase is modular and easy to extend:
 - `raindrop_api.js` - Add new API endpoints or methods
 - `watcher.js` - Modify file watching or processing logic
 - `test_upload.js` - Add new test scenarios
+- `daemon-manager.js` - Enhance daemon management features
 
 ### Running Tests
 
@@ -210,16 +301,34 @@ node test_upload.js
 
 # Test with custom file
 node test_upload.js "/path/to/file.png"
+
+# Test daemon functionality
+npm run daemon status
+npm run daemon logs
 ```
+
+## Daemon Management Commands
+
+| Command | Description |
+|---------|-------------|
+| `npm run daemon install` | Install daemon (auto-starts on login) |
+| `npm run daemon uninstall` | Remove daemon completely |
+| `npm run daemon start` | Start the daemon |
+| `npm run daemon stop` | Stop the daemon |
+| `npm run daemon restart` | Restart the daemon |
+| `npm run daemon status` | Check if daemon is running |
+| `npm run daemon logs` | View recent logs |
+| `npm run daemon errors` | View recent errors |
 
 ## Stretch Goals (Future Development)
 
 - 🍎 Package as a macOS menu bar app
 - 🎨 GUI for configuration management
 - 🔍 More sophisticated duplicate detection
-- 📊 Upload statistics and monitoring
+- 📊 Upload statistics and monitoring dashboard
 - 🔒 macOS Keychain integration for token storage
 - 📱 iOS companion app integration
+- 🌐 Cross-platform support (Windows, Linux)
 
 ## Contributing
 
@@ -237,9 +346,10 @@ MIT License - see LICENSE file for details
 
 For issues or questions:
 1. Check the troubleshooting section
-2. Run the test script for diagnostics
-3. Check Raindrop.io API documentation
-4. Create an issue in the repository
+2. Run the test script for diagnostics: `npm test`
+3. Check daemon logs: `npm run daemon logs`
+4. Check Raindrop.io API documentation
+5. Create an issue in the repository
 
 ---
 

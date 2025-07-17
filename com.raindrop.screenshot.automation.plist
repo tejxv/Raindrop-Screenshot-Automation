@@ -7,12 +7,12 @@
     
     <key>ProgramArguments</key>
     <array>
-        <string>/usr/local/bin/node</string>
-        <string>watcher.js</string>
+        <string>/opt/homebrew/bin/node</string>
+        <string>/Users/tejas/Documents/Raindrop-Screenshot-Automation/watcher.js</string>
     </array>
     
     <key>WorkingDirectory</key>
-    <string>/Users/tejas/Documents/Raindrop%20SS%20Automation</string>
+    <string>/Users/tejas/Documents/Raindrop-Screenshot-Automation</string>
     
     <key>RunAtLoad</key>
     <true/>
@@ -31,7 +31,7 @@
         <key>NODE_ENV</key>
         <string>production</string>
         <key>PATH</key>
-        <string>/usr/local/bin:/usr/bin:/bin</string>
+        <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
     </dict>
 </dict>
 </plist> 
